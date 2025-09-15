@@ -10,6 +10,8 @@ app.use(express.json());
 app.use('/properties', require('./routes/properties'));
 app.use('/search', require('./routes/search'));
 app.use('/wishlist', require('./routes/wishlist'));
+app.use('/manajemen_fasilitas', require('./routes/manajemen_fasilitas'));
+app.use('/manajemen_properti', require('./routes/manajemen_properti'));
 
 app.listen(PORT, () => {
   console.log(`End-user service running on port ${PORT}`);
