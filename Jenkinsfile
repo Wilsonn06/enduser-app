@@ -31,9 +31,9 @@ spec:
 
   environment {
     FRONTEND_DIR = 'enduser-frontend'
-    IMAGE_NAME = 'wilsonn06/enduser-app'
+    IMAGE_NAME = 'wilsonnn06/enduser-app'
     IMAGE_TAG = '1.0'
-}
+  }
 
   stages {
     stage('Checkout') {
