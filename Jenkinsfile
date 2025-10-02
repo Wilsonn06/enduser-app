@@ -31,6 +31,8 @@ spec:
 
   environment {
     FRONTEND_DIR = 'enduser-frontend'
+    IMAGE_NAME = 'wilsonn06/enduser-app'
+    IMAGE_TAG = '1.0'
   }
 
   stages {
@@ -82,7 +84,21 @@ spec:
     stage('Build Docker image') {
       steps {
         container('docker') {
-          sh 'docker build -t microservices-app:1.0 .'
+          sh 'docker build -t $IMAGE_NAME:$IMAGE_TAG .'
+        }
+      }
+    }
+
+    stage('Push Docker image') {
+      steps {
+        container('docker') {
+          withCredentials([usernamePassword(credentialsId: 'dockerhub-cred', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+            sh '''
+              echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+              docker push $IMAGE_NAME:$IMAGE_TAG
+              docker logout
+            '''
+          }
         }
       }
     }
