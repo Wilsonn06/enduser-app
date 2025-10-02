@@ -9,10 +9,22 @@ kind: Pod
 spec:
   containers:
   - name: node
-    image: node:18
+    image: node:20
     command:
     - cat
     tty: true
+  - name: docker
+    image: docker:25.0
+    command:
+    - cat
+    tty: true
+    volumeMounts:
+    - name: docker-sock
+      mountPath: /var/run/docker.sock
+  volumes:
+  - name: docker-sock
+    hostPath:
+      path: /var/run/docker.sock
 """
     }
   }
@@ -54,9 +66,7 @@ spec:
             set -e
             rm -rf dist || true
             mkdir -p dist
-            # copy backend files
             cp -r index.js package*.json routes dist/
-            # copy frontend production build to dist/public (Express biasanya serve static dari 'public')
             cp -r enduser-frontend/dist dist/public
           '''
         }
@@ -66,6 +76,14 @@ spec:
     stage('Archive artifacts') {
       steps {
         archiveArtifacts artifacts: 'dist/**', fingerprint: true
+      }
+    }
+
+    stage('Build Docker image') {
+      steps {
+        container('docker') {
+          sh 'docker build -t microservices-app:1.0 .'
+        }
       }
     }
   }
