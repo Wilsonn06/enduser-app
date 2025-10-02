@@ -1,45 +1,87 @@
 pipeline {
   agent {
-    docker {
-      image 'node:18-alpine'   // node yang cukup baru
-      args '-u root:root'
+    kubernetes {
+      label 'nodejs-build'
+      defaultContainer 'node'
+      yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: node
+    image: node:18
+    command:
+    - cat
+    tty: true
+"""
     }
   }
+
+  environment {
+    FRONTEND_DIR = 'enduser-frontend'
+  }
+
   stages {
-    stage("Checkout") {
+    stage('Checkout') {
       steps {
         checkout scm
       }
     }
 
-    stage("Install Dependencies") {
+    stage('Install backend deps') {
       steps {
-        sh 'npm install'
+        container('node') {
+          sh 'npm ci'
+        }
       }
     }
 
-    stage("Build React") {
+    stage('Build frontend') {
       steps {
-        // build frontend React
-        sh 'npm run build'
+        container('node') {
+          dir("${env.FRONTEND_DIR}") {
+            sh 'npm ci'
+            sh 'npm run build'
+          }
+        }
       }
     }
 
-    stage("Package App") {
+    stage('Prepare dist') {
       steps {
-        // kalau express dipakai untuk serve React build:
-        sh '''
-          mkdir -p dist
-          cp -r build dist/frontend
-          cp -r server.js dist/
-        '''
+        container('node') {
+          sh '''
+            set -e
+            rm -rf dist || true
+            mkdir -p dist
+            # copy backend files
+            cp -r index.js package*.json routes dist/
+            # copy frontend production build to dist/public (Express biasanya serve static dari 'public')
+            cp -r ${FRONTEND_DIR}/build dist/public
+          '''
+        }
       }
     }
 
-    stage("Archive Artifacts") {
+    stage('Test (optional)') {
+      steps {
+        container('node') {
+          // tidak membuat pipeline gagal jika tidak ada test
+          sh 'npm test -- --watchAll=false || true'
+        }
+      }
+    }
+
+    stage('Archive artifacts') {
       steps {
         archiveArtifacts artifacts: 'dist/**', fingerprint: true
       }
+    }
+  }
+
+  post {
+    always {
+      archiveArtifacts artifacts: 'dist/**', allowEmptyArchive: true
     }
   }
 }
