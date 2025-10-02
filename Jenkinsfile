@@ -57,7 +57,7 @@ spec:
             # copy backend files
             cp -r index.js package*.json routes dist/
             # copy frontend production build to dist/public (Express biasanya serve static dari 'public')
-            cp -r ${FRONTEND_DIR}/build dist/public
+            cp -r enduser-frontend/dist dist/public
           '''
         }
       }
