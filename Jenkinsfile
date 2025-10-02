@@ -63,15 +63,6 @@ spec:
       }
     }
 
-    stage('Test (optional)') {
-      steps {
-        container('node') {
-          // tidak membuat pipeline gagal jika tidak ada test
-          sh 'npm test -- --watchAll=false || true'
-        }
-      }
-    }
-
     stage('Archive artifacts') {
       steps {
         archiveArtifacts artifacts: 'dist/**', fingerprint: true
